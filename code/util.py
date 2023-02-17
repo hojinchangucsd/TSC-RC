@@ -15,16 +15,24 @@ def prep_data(X,Y,Z=8):
 
     # Average X across dim T per Z timepoints
     N = len(X)
-    averaged_X = np.empty((X.shape[0], math.ceil(X.shape[1] // Z), X.shape[2]))
-    for i in range(0, averaged_X.shape[1]): 
-        averaged_X[:,i,:] = np.mean(X[:,i*Z:(i+1)*Z,:], keepdims=True, axis=1).squeeze()
+    aX = np.empty((X.shape[0], math.ceil(X.shape[1] // Z), X.shape[2]))
+    for i in range(0, aX.shape[1]): 
+        aX[:,i,:] = np.mean(X[:,i*Z:(i+1)*Z,:], keepdims=True, axis=1).squeeze()
 
+    '''
     # Z-score normalization
-    X_std = np.std(X, axis=1, keepdims=True)
-    X_mean = np.mean(X, axis=1, keepdims=True)
-    normalized_X = (averaged_X - X_mean) / X_std
+    aX_std = np.std(aX, axis=1, keepdims=True)
+    aX_mean = np.mean(aX, axis=1, keepdims=True)
+    nX = (aX - aX_mean) / aX_std
+    '''
+    '''
+    # Min-max normalization
+    aX_min = aX.min(axis=1, keepdims=True)
+    aX_max = aX.max(axis=1, keepdims=True)
+    nX = (aX - aX_min) / (aX_max - aX_min)
+    '''
 
-    return normalized_X, Y
+    return aX, Y
 
 # Return: X_train, X_test, Y_train, Y_test
 def split_data(X,Y,train_split=0.8): 
