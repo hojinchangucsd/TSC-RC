@@ -33,7 +33,7 @@ config['mts_rep'] = 'reservoir'         # MTS representation:  {'last', 'mean', 
 config['w_ridge_embedding'] = 10.0      # regularization parameter of the ridge regression
 
 # Type of readout
-config['readout_type'] = 'lin'          # readout used for classification: {'lin', 'mlp', 'svm'}
+config['readout_type'] = 'mlp'          # readout used for classification: {'lin', 'mlp', 'svm'}
 
 # Linear readout hyperparameters
 config['w_ridge'] = 5.0                 # regularization of the ridge regression readout
@@ -43,7 +43,7 @@ config['svm_gamma'] = 0.005             # bandwith of the RBF kernel
 config['svm_C'] = 5.0                   # regularization for SVM hyperplane
 
 # MLP readout hyperparameters
-config['mlp_layout'] = (10,10)          # neurons in each MLP layer
+config['mlp_layout'] = (100,50,10)      # neurons in each MLP layer
 config['num_epochs'] = 2000             # number of epochs 
 config['w_l2'] = 0.001                  # weight of the L2 regularization
 config['nonlinearity'] = 'relu'         # type of activation function {'relu', 'tanh', 'logistic', 'identity'}
