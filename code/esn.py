@@ -1,6 +1,7 @@
 # General imports
 import numpy as np
 import scipy.io
+import time
 
 # Custom imports
 from modules import RC_model
@@ -10,15 +11,15 @@ from util import *
 config = {}
 config['dataset_name'] = 'veriskin'
 
-config['seed'] = 1
+config['seed'] = int(time.time())
 np.random.seed(config['seed'])
 
 # Hyperarameters of the reservoir
 config['n_internal_units'] = 450        # size of the reservoir
 config['spectral_radius'] = 0.59        # largest eigenvalue of the reservoir
-config['leak'] = 0.6                    # amount of leakage in the reservoir state update (None or 1.0 --> no leakage)
-config['connectivity'] = 0.25           # percentage of nonzero connections in the reservoir
-config['input_scaling'] = 0.1           # scaling of the input weights
+config['leak'] = None                   # amount of leakage in the reservoir state update (None or 1.0 --> no leakage)
+config['connectivity'] = 0.01           # percentage of nonzero connections in the reservoir
+config['input_scaling'] = 0.5           # scaling of the input weights
 config['noise_level'] = 0.01            # noise in the reservoir state update
 config['n_drop'] = 5                    # transient states to be dropped
 config['bidir'] = True                  # if True, use bidirectional reservoir
@@ -26,7 +27,7 @@ config['circ'] = False                  # use reservoir with circle topology
 
 # Dimensionality reduction hyperparameters
 config['dimred_method'] ='tenpca'       # options: {None (no dimensionality reduction), 'pca', 'tenpca'}
-config['n_dim'] = 75                    # number of resulting dimensions after the dimensionality reduction procedure
+config['n_dim'] = 40                    # number of resulting dimensions after the dimensionality reduction procedure
 
 # Type of MTS representation
 config['mts_rep'] = 'reservoir'         # MTS representation:  {'last', 'mean', 'output', 'reservoir'}
@@ -36,7 +37,7 @@ config['w_ridge_embedding'] = 10.0      # regularization parameter of the ridge 
 config['readout_type'] = 'mlp'          # readout used for classification: {'lin', 'mlp', 'svm'}
 
 # Linear readout hyperparameters
-config['w_ridge'] = 5.0                 # regularization of the ridge regression readout
+config['w_ridge'] = 10.0                # regularization of the ridge regression readout
 
 # SVM readout hyperparameters
 config['svm_gamma'] = 0.005             # bandwith of the RBF kernel
@@ -51,10 +52,13 @@ config['nonlinearity'] = 'relu'         # type of activation function {'relu', '
 print(config)
 
 # ============ Load dataset ============
+print("Loading data...")
 X, Y = load_data('C:\\Users\\Hojin\\Documents\\Career\\Veriskin\\dataset\\')
+print("Preparing data...")
 X, Y = prep_data(X, Y)
+print("Splitting data...")
 Xtr, Xte, Ytr, Yte = split_data(X, Y, train_split=0.8)
-
+print("Creating model...")
 # ============ Initialize, train and evaluate the RC model ============
 classifier =  RC_model(
                         reservoir=None,     
@@ -80,9 +84,9 @@ classifier =  RC_model(
                         svm_gamma=config['svm_gamma'],
                         svm_C=config['svm_C']
                         )
-
+print("Training...")
 tr_time = classifier.train(Xtr, Ytr)
 print('Training time = %.2f seconds'%tr_time)
-
-accuracy, f1 = classifier.test(Xte, Yte)
-print('Accuracy = %.3f, F1 = %.3f'%(accuracy, f1))
+print("Testing...")
+accuracy, f1, mcc, sensitivity, specificity = classifier.test(Xte, Yte)
+print('Accuracy = %.3f, F1 = %.3f, MCC = %.3f, Sensitivity = %.3f, Specificity = %.3f'%(accuracy, f1, mcc, sensitivity, specificity))

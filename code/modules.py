@@ -2,7 +2,7 @@
 import numpy as np
 import time
 from sklearn.linear_model import Ridge
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, matthews_corrcoef, confusion_matrix
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
@@ -21,12 +21,15 @@ def compute_test_scores(pred_class, Yte):
     true_class = np.argmax(Yte, axis=1)
     
     accuracy = accuracy_score(true_class, pred_class)
+    mcc = matthews_corrcoef(true_class, pred_class)
+    tn, fp, fn, tp = confusion_matrix(true_class, pred_class).ravel()
     if Yte.shape[1] > 2:
         f1 = f1_score(true_class, pred_class, average='weighted')
     else:
         f1 = f1_score(true_class, pred_class, average='binary')
-
-    return accuracy, f1
+    sensitivity = tp / (tp + fn)
+    specificity = tn / (tn + fp)
+    return accuracy, f1, mcc, sensitivity, specificity
 
             
 class RC_model(object):
@@ -168,9 +171,11 @@ class RC_model(object):
         time_start = time.time()
         
         # ============ Compute reservoir states ============ 
+        t_crs = time.time()
         res_states = self._reservoir.get_states(X, n_drop=self.n_drop, bidir=self.bidir)
-        
+        print("computed reservoir states in %.1f seconds"%(time.time() - t_crs))
         # ============ Dimensionality reduction of the reservoir states ============  
+        t_drs = time.time()
         if self.dimred_method.lower() == 'pca':
             # matricize
             N_samples = res_states.shape[0]
@@ -183,11 +188,12 @@ class RC_model(object):
             red_states = self._dim_red.fit_transform(res_states)       
         else: # Skip dimensionality reduction
             red_states = res_states
-
+        print("reduced dimensionality of reservoir states in %.1f seconds"%(time.time() - t_drs))
         # ============ Generate representation of the MTS ============
+        t_gri = time.time()
         coeff_tr = []
         biases_tr = []   
-        
+
         # Output model space representation
         if self.mts_rep=='output':
             if self.bidir:
@@ -217,8 +223,9 @@ class RC_model(object):
             
         else:
             raise RuntimeError('Invalid representation ID')            
-            
+        print("generated representation of input in %.1f seconds"%(time.time() - t_gri))
         # ============ Apply readout ============
+        t_ar = time.time()
         if self.readout_type == None: # Just store the input representations
             self.input_repr = input_repr
             
@@ -233,9 +240,9 @@ class RC_model(object):
             
         elif self.readout_type == 'mlp': # MLP (deep readout)
             self.readout.fit(input_repr, Y)
-                        
-        tot_time = (time.time()-time_start)/60
-        return tot_time
+        print("applied readout in %.1f seconds"%(time.time() - t_ar))   
+        
+        return time.time()-time_start
 
             
     def test(self, Xte, Yte):
@@ -305,5 +312,5 @@ class RC_model(object):
             pred_class = self.readout.predict(input_repr_te)
             pred_class = np.argmax(pred_class, axis=1)
             
-        accuracy, f1 = compute_test_scores(pred_class, Yte)
-        return accuracy, f1
+        accuracy, f1, mcc, ss, sp = compute_test_scores(pred_class, Yte)
+        return accuracy, f1, mcc, ss, sp
