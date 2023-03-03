@@ -12,25 +12,6 @@ from scipy.spatial.distance import pdist, cdist, squareform
 from reservoir import Reservoir
 from tensorPCA import tensorPCA
 
-
-def compute_test_scores(pred_class, Yte):
-    """
-    Wrapper to compute classification accuracy and F1 score
-    """
-    
-    true_class = np.argmax(Yte, axis=1)
-    
-    accuracy = accuracy_score(true_class, pred_class)
-    mcc = matthews_corrcoef(true_class, pred_class)
-    tn, fp, fn, tp = confusion_matrix(true_class, pred_class).ravel()
-    if Yte.shape[1] > 2:
-        f1 = f1_score(true_class, pred_class, average='weighted')
-    else:
-        f1 = f1_score(true_class, pred_class, average='binary')
-    sensitivity = tp / (tp + fn)
-    specificity = tn / (tn + fp)
-    return accuracy, f1, mcc, sensitivity, specificity
-
             
 class RC_model(object):
     
@@ -244,7 +225,6 @@ class RC_model(object):
         
         return time.time()-time_start
 
-            
     def test(self, Xte, Yte):
 
         # ============ Compute reservoir states ============
@@ -312,5 +292,4 @@ class RC_model(object):
             pred_class = self.readout.predict(input_repr_te)
             pred_class = np.argmax(pred_class, axis=1)
             
-        accuracy, f1, mcc, ss, sp = compute_test_scores(pred_class, Yte)
-        return accuracy, f1, mcc, ss, sp
+        return pred_class
