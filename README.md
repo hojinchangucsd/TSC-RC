@@ -1,3 +1,5 @@
+This is a fork of the repo https://github.com/FilippoMB/Time-series-classification-and-clustering-with-Reservoir-Computing.git. 
+
 # Framework overview
 
 <img src="./logs/RC_classifier.JPG" width="603.5" height="320">
